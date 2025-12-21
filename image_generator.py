@@ -15,14 +15,23 @@ draw = ImageDraw.Draw(img)
 #    Replace 'path/to/your/font.ttf' with the actual path to your font file
 try:
     font_path = "fonts/google/WalterTurncoat-Regular.ttf"
+    sicon_path = "fonts/fa/Font Awesome 7 Free-Solid-900.otf"
+    ricon_path = "fonts/fa/Font Awesome 7 Free-Regular-400.otf"
     font_size = 20
-    icon_path = "fonts/fa/Font Awesome 7 Free-Solid-900.otf"
     icon_size = 20
+
+    
     # The truetype function loads the font object
     font = ImageFont.truetype(font_path, font_size)
-    icon = ImageFont.truetype(icon_path, icon_size)
     font_l = ImageFont.truetype(font_path, font_size + 10)
-    icon_l = ImageFont.truetype(icon_path, icon_size + 10)
+    
+    sicon = ImageFont.truetype(sicon_path, icon_size)
+    sicon_l = ImageFont.truetype(sicon_path, icon_size + 10)
+    
+    ricon = ImageFont.truetype(ricon_path, icon_size)
+    ricon_l = ImageFont.truetype(ricon_path, icon_size + 10)
+    
+    
 except IOError:
     print(f"Error: Could not load font at {font_path}. Using default font.")
     # Fallback to a default bitmap font if the file is not found (limited functionality)
@@ -34,8 +43,8 @@ text_color = (0, 0, 0) # Black color
 position = (10, 10) # Starting position (top-left corner of the text's bounding box)
 
 draw.text(position, text, fill=text_color, font=font)
-draw.text( (220, 10), "\uF1EB", fill=text_color,  font=icon)
-draw.text( (190, 10), '\uF05E', fill=text_color,  font=icon)
+draw.text( (220, 10), "\uF1EB", fill=text_color,  font=sicon)
+draw.text( (190, 10), '\uF05E', fill=text_color,  font=sicon)
 
 # weather
 owm_apikey = "c236ac822c68d3cfc4b4dc11ac5b3a8c"
@@ -50,17 +59,27 @@ try:
     data = response.json()
     
     # Extracting relevant information
-    temperature = data['main']['temp']
+    temperature = round(data['main']['temp'])
     humidity = data['main']['humidity']
     description = data['weather'][0]['description']
     
-    if re.search("cloud", description, flags=re.IGNORECASE):
-        draw.text ((120,60), "\uF0C2", fill=text_color, font=icon_l)
-    else:
-        draw.text ((120,60), "\uF186", fill=text_color, font=icon_l)
-
     
-    draw.text ((22,55), f"{temperature}", fill=text_color, font=font_l)
+    temp_line_x=22
+    text = f"{temperature}°"
+    draw.text ((temp_line_x, 55), text, fill=text_color, font=font_l)
+    x_offset = draw.textlength(text, font=font_l)
+    temp_line_x += x_offset
+    
+    if re.search("broken cloud", description, flags=re.IGNORECASE):
+        draw.text ((temp_line_x, 60), "\uF0C2", fill=text_color, font=ricon_l)
+        
+    elif re.search("cloud", description, flags=re.IGNORECASE):
+        draw.text ((temp_line_x, 60), "\uF0C2", fill=text_color, font=sicon_l)
+
+    else:
+        draw.text ((temp_line_x, 60), "\uF0C2", fill=text_color, font=sicon_l)
+
+
     print(f"temp {temperature} / hum {humidity} / {description}")
 except Exception as e:
     print(e)
