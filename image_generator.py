@@ -5,15 +5,21 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 import re
 from icmplib import ping
+from datetime import datetime
 
 
 class Panel:
     def __init__(self):
-        # 1. Create a blank image (or open an existing one)
-        #    Mode "RGB", size (width, height), white background color
-        self.max_x = 264
-        self.max_y = 176
-        self.img = Image.new('RGB', (self.max_x, self.max_y), color = (255, 255, 255))
+        # non-margined image size
+        img_x = 264
+        img_y = 176
+        
+        # usable area /w margins applied
+        margin = 5
+        self.max_x = img_x - margin
+        self.max_y = img_y
+        
+        self.img = Image.new('RGB', (img_x, img_y), color = (255, 255, 255))
         
         # 2. Get a drawing context
         self.draw = ImageDraw.Draw(self.img)
@@ -31,44 +37,41 @@ class Panel:
         self.img.save("output_image_with_text.png")
         self.img.show() # Opens the image in the system's default image viewer
 
-# 3. Load the TrueType font and specify the size
-#    Replace 'path/to/your/font.ttf' with the actual path to your font file
-try:
-    font_path = "fonts/google/WalterTurncoat-Regular.ttf"
-    sicon_path = "fonts/fa/Font Awesome 7 Free-Solid-900.otf"
-    ricon_path = "fonts/fa/Font Awesome 7 Free-Regular-400.otf"
-    font_size = 20
-    
-    # The truetype function loads the font object
-    font = ImageFont.truetype(font_path, font_size)
-    font_l = ImageFont.truetype(font_path, font_size + 10)
-    
-    sicon = ImageFont.truetype(sicon_path, font_size)
-    sicon_l = ImageFont.truetype(sicon_path, font_size + 10)
-    
-    ricon = ImageFont.truetype(ricon_path, font_size)
-    ricon_l = ImageFont.truetype(ricon_path, font_size + 10)
-except IOError:
-    print(f"Error: Could not load font at {font_path}. Using default font.")
-    sys.exit(1)
+class Font:
+    def __init__(self, path):
+        self.path = path
+        self.cache = {}
+    def size(self, size=20):
+        if size in self.cache:
+            return self.cache[size]
+        try:
+            self.cache[size] = ImageFont.truetype(self.path, size)
+        except IOError:
+            print(f"Error: Could not load font at {self.path}")
+            sys.exit(1)
+        return self.cache[size]
 
+icosolid = Font("fonts/fa/Font Awesome 7 Free-Solid-900.otf")
+icoreg = Font("fonts/fa/Font Awesome 7 Free-Regular-400.otf")
+#fontreg = Font("fonts/google/WalterTurncoat-Regular.ttf")
+fontreg = Font("fonts/google/Amarante-Regular.ttf")
 
 panel = Panel()
-panel.add((10, 10), "Meadowbrook", font=font)
+panel.add((5, 5), "Meadowbrook", font=fontreg.size())
 
 host = ping("8.8.8.8", privileged=False)
 ico = "\uF1EB"
 rtt = int(host.avg_rtt)
 txt = f"{rtt}ms"
-width = 8 + panel.estimate(ico, font=sicon) + panel.estimate(txt, font=font)
+width = 8 + panel.estimate(ico, font=icosolid.size(28)) + panel.estimate(txt, font=fontreg.size(28))
 x = panel.max_x - width
-x += panel.add((x, 12), ico, font=sicon)
+x += panel.add((x, 5), ico, font=icosolid.size(28))
 x += 8
-x += panel.add((x, 10), txt, font=font)
+x += panel.add((x, 3), txt, font=fontreg.size(28))
 
 
 # if no ping
-#panel.add( (190, 10), '\uF05E', font=sicon)
+#panel.add( (190, 10), '\uF05E', font=icosolid.size())
 
 # weather
 owm_apikey = "c236ac822c68d3cfc4b4dc11ac5b3a8c"
@@ -84,31 +87,54 @@ try:
     
     # Extracting relevant information
     temperature = round(data['main']['temp'])
-    humidity = data['main']['humidity']
+    feels = round(data['main']['feels_like'])
     description = data['weather'][0]['description']
-        
-    x = 22
-    x += panel.add ((x, 55), f"{temperature}°", font=font_l)
-    
-    if re.search("broken cloud", description, flags=re.IGNORECASE):
-        x += panel.add((x, 60), "\uF0C2", font = ricon_l)
-        
-    elif re.search("cloud", description, flags=re.IGNORECASE):
-        x += panel.add((x, 60), "\uF0C2", font =sicon_l)
-
-    else:
-        x += panel.add((x, 60), "\uF0C2", font =sicon_l)
-
-    txt = f"{humidity}%"
-    ico = "\uF773"
-    width = panel.estimate(txt, font = font_l) + panel.estimate(ico, sicon_l)
-    x = panel.max_x - width
-    x += panel.add ((x, 55), txt, font = font_l)
-    x += panel.add ((x, 60), ico, font = sicon_l)
-
-    print(f"temp {temperature} / hum {humidity} / {description}")
+    sunrise = data['sys']['sunrise']
+    sunset = data['sys']['sunset']
 except Exception as e:
     print(e)
+
+x = 30
+x += panel.add ((x, 36), f"{feels}°", font=fontreg.size(70))
+x -= 4
+
+if re.search("(broken|few) cloud", description, flags=re.IGNORECASE):
+    x += panel.add((x, 50), "\uF0C2", font = icoreg.size(60)) # cloud
+    
+elif re.search("cloud", description, flags=re.IGNORECASE):
+    x += panel.add((x, 50), "\uF0C2", font =icosolid.size(60)) # solid cloud
+    
+elif re.search("light snow", description, flags=re.IGNORECASE):
+    x += panel.add((x, 50), "\uf2dc", font =icoreg.size(60)) # solid snowflake
+    
+elif re.search("snow", description, flags=re.IGNORECASE):
+    x += panel.add((x, 50), "\uf2dc", font =icosolid.size(60)) # snowflake
+    
+else:
+    x += panel.add((x, 50), "\uf057", font =icosolid.size(60))
+
+time = datetime.fromtimestamp(sunrise).strftime('%I:%M %p')
+time = time.lstrip("0")
+ico = "\uf106" # arrow up
+txt = f"{time}"
+width = panel.estimate(txt, font = fontreg.size()) + panel.estimate(ico, icosolid.size())
+x = panel.max_x - width
+x += panel.add((x, 120), txt, font = fontreg.size())
+panel.add((x, 120), ico, font = icosolid.size())
+
+time = datetime.fromtimestamp(sunset).strftime('%I:%M %p')
+time = time.lstrip("0")
+ico = "\uf107" # arrow down
+txt = f"{time}"
+width = panel.estimate(txt, font = fontreg.size()) + panel.estimate(ico, icosolid.size())
+x = panel.max_x - width
+x += panel.add((x, 140), txt, font = fontreg.size())
+panel.add((x, 140), ico, font = icosolid.size())
+
+time = datetime.now().strftime('%I:%M %p')
+panel.add((0, 120), time.lstrip("0"), font = fontreg.size(40))
+
+print(f"temp {temperature} / {description}")
 
 panel.save_and_show()
 
