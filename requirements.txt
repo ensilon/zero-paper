@@ -1,8 +1,9 @@
 certifi==2025.11.12
 charset-normalizer==3.4.4
 geojson==3.2.0
+icmplib==3.0.4
 idna==3.11
-pillow==12.0.0
+pillow==11.0.0
 pyowm==3.5.0
 PySocks==1.7.1
 requests==2.32.5

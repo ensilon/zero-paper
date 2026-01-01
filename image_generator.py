@@ -32,9 +32,11 @@ class Panel:
     def estimate(self, content, font=""):
         return self.draw.textlength(content, font = font)
 
-    def save_and_show(self):
-        # 5. Save or display the image
+    def save(self):
         self.img.save("output_image_with_text.png")
+        
+    def save_and_show(self):
+        self.save()
         self.img.show() # Opens the image in the system's default image viewer
 
 class Font:
@@ -136,6 +138,6 @@ panel.add((0, 120), time.lstrip("0"), font = fontreg.size(40))
 
 print(f"temp {temperature} / {description}")
 
-panel.save_and_show()
+panel.save()
 
 
