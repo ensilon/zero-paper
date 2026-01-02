@@ -77,8 +77,8 @@ if __name__ == "__main__":
 
     print(f"temp {forcast['temperature']} / {forcast['description']}")
 
-    #epd.start()
-    #epd.refresh(panel.img)
+    epd.start()
+    epd.refresh(panel.img)
     #panel.save()
 
 

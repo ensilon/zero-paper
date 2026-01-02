@@ -12,4 +12,4 @@ class EPD:
 
     def refresh(self, image):
         self.epd27.Clear()
-        self.epd27.display(epd.getbuffer(image))
+        self.epd27.display(self.epd27.getbuffer(image))
