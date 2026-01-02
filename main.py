@@ -98,7 +98,8 @@ if __name__ == "__main__":
 
     print(f"temp {temperature} / {description}")
 
-    epd.refresh(panel.img)
+    #epd.start()
+    #epd.refresh(panel.img)
     #panel.save()
 
 
