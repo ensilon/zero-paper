@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import epaper
+from epaper import epaper
 
 class EPD:
     def __init__(self):
-        self.epd27 = epaper.epaper('epd2in7_V2').EPD()
+        self.epd27 = epaper('epd2in7_V2').EPD()
 
     def start(self):
         self.epd27.init()
